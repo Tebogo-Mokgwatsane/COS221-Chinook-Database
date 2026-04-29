@@ -1,4 +1,5 @@
 /** @author Tebogo Mokgwatsane */
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -50,10 +51,70 @@ public class ChinookApp extends JFrame {
         add(tabbedPane);
 
 
+        // Create all tabs/tables
+        createEmployeesTab();
+
 
         setVisible(true);
     }
 
+    // ====================== 4.1 EMPLOYEES TAB ======================
+    private void createEmployeesTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JLabel lblFilter = new JLabel("Filter by Name or City:");
+        JTextField txtFilter = new JTextField(20);
+        JButton btnFilter = new JButton("Apply Filter");
+
+        JPanel top = new JPanel();
+        top.add(lblFilter);
+        top.add(txtFilter);
+        top.add(btnFilter);
+
+        String[] columns = {"First Name", "Last Name", "Title", "City", "Country", "Phone", "Supervisor"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        loadEmployees(model, "");
+
+        tabbedPane.addTab("Employees", panel);
+    }
+
+    private void loadEmployees(DefaultTableModel model, String filter) {
+        model.setRowCount(0);
+        String sql = """
+            SELECT e1.FirstName, e1.LastName, e1.Title, e1.City, e1.Country, e1.Phone,
+                   CONCAT(e2.FirstName, ' ', e2.LastName) AS Supervisor
+            FROM Employee e1
+            LEFT JOIN Employee e2 ON e1.ReportsTo = e2.EmployeeId
+            WHERE CONCAT(e1.FirstName, ' ', e1.LastName, e1.City) LIKE ?
+            """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, "%" + filter + "%");
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                Vector<Object> row = new Vector<>();
+                row.add(rs.getString("FirstName"));
+                row.add(rs.getString("LastName"));
+                row.add(rs.getString("Title"));
+                row.add(rs.getString("City"));
+                row.add(rs.getString("Country"));
+                row.add(rs.getString("Phone"));
+                row.add(rs.getString("Supervisor"));
+                model.addRow(row);
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Error loading employees: " + ex.getMessage());
+        }
+    }
 
     private void initComponents() {
 
