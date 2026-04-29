@@ -55,7 +55,6 @@ public class ChinookApp extends JFrame {
         Color accentOrange = new Color(255, 140, 0);     // MariaDB like orange
 
         getContentPane().setBackground(new Color(245, 245, 245)); // light gray background
-        //getContentPane().setBackground(lightBg);
 
         tabbedPane.setBackground(new Color(240, 240, 240));
         tabbedPane.setForeground(Color.BLACK);
