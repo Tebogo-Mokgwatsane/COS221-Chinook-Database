@@ -58,7 +58,7 @@ public class ChinookApp extends JFrame {
         setVisible(true);
     }
 
-    // ====================== 4.1 EMPLOYEES TAB ======================
+    // ====================== 4.1 + 4.2 EMPLOYEES TAB ======================
     private void createEmployeesTab() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -80,6 +80,15 @@ public class ChinookApp extends JFrame {
         panel.add(scroll, BorderLayout.CENTER);
 
         loadEmployees(model, "");
+
+        // Real-time button filter
+        ActionListener filterAction = e -> loadEmployees(model, txtFilter.getText().trim());
+        btnFilter.addActionListener(filterAction);
+        txtFilter.addKeyListener(new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) filterAction.actionPerformed(null);
+            }
+        });
 
         tabbedPane.addTab("Employees", panel);
     }
