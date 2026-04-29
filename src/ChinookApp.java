@@ -44,26 +44,29 @@ public class ChinookApp extends JFrame {
     public ChinookApp() {
 
         setTitle("Chinook Music Store - COS 221 Practical 4");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(1250, 820);
+        setLocationRelativeTo(null);
+
+        tabbedPane = new JTabbedPane();
 
         // ====================== COLOR/STYKE THEME ======================
-        getContentPane().setBackground(new Color(245, 245, 245)); // light gray background
-    
         Color primaryBlue = new Color(0, 123, 255);      // MySQL like blue
         Color accentOrange = new Color(255, 140, 0);     // MariaDB like orange
+
+        getContentPane().setBackground(new Color(245, 245, 245)); // light gray background
+        //getContentPane().setBackground(lightBg);
 
         tabbedPane.setBackground(new Color(240, 240, 240));
         tabbedPane.setForeground(Color.BLACK);
     
         //Making active tabs more visible
-        UIManager.put("TabbedPane.selectedForeground", Color.WHITE);
+        UIManager.put("TabbedPane.selectedForeground", Color.WHITE);        
         UIManager.put("TabbedPane.selectedBackground", primaryBlue);
+        UIManager.put("Button.background", primaryBlue);
+        UIManager.put("Button.foreground", Color.WHITE);
         // ====================== COLOR/STYLE THEME ======================
-        
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 800); //setSize(1250, 820);
-        setLocationRelativeTo(null);
 
-        tabbedPane = new JTabbedPane();
         add(tabbedPane);
 
         // Create all tabs/tables
