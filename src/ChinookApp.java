@@ -231,7 +231,16 @@ public class ChinookApp extends JFrame {
 
         dialog.setVisible(true);
     }
-    
+
+    private void populateCombo(JComboBox<String> cb, String sql, String column) {
+        cb.removeAllItems();
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                cb.addItem(rs.getString(column));
+            }
+        } catch (Exception ignored) {}
+    }
+
     private void initComponents() {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
