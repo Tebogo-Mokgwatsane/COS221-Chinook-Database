@@ -11,4 +11,11 @@ LEFT JOIN Album a ON t.AlbumId = a.AlbumId
 LEFT JOIN Genre g ON t.GenreId = g.GenreId
 LEFT JOIN MediaType m ON t.MediaTypeId = m.MediaTypeId
 LIMIT 200
+
+INSERT INTO Track (Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, UnitPrice)
+VALUES (?, (SELECT AlbumId FROM Album WHERE Title=? LIMIT 1),
+(SELECT MediaTypeId FROM MediaType WHERE Name=? LIMIT 1),
+(SELECT GenreId FROM Genre WHERE Name=? LIMIT 1), ?, ?, ?)
+
+
             

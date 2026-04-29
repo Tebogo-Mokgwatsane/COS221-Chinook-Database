@@ -125,7 +125,7 @@ public class ChinookApp extends JFrame {
             JOptionPane.showMessageDialog(this, "Error loading employees: " + ex.getMessage());
         }
     }
-    // ====================== 4.3 TRACKS TAB ======================
+    // ====================== 4.3 TRACKS TAB - ADD NEW TRACK ======================
     private void createTracksTab() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -139,6 +139,8 @@ public class ChinookApp extends JFrame {
         panel.add(scroll, BorderLayout.CENTER);
 
         loadTracks(model);
+
+        btnAdd.addActionListener(e -> showAddTrackDialog(model));
 
         tabbedPane.addTab("Tracks", panel);
     }
@@ -172,6 +174,64 @@ public class ChinookApp extends JFrame {
         }
     }
 
+    // ====================== ADD NEW TRACK ======================
+    private void showAddTrackDialog(DefaultTableModel model) {
+        JDialog dialog = new JDialog(this, "Add New Track", true);
+        dialog.setLayout(new GridLayout(0, 2, 10, 10));
+        dialog.setSize(500, 400);
+
+        JTextField txtName = new JTextField();
+        JComboBox<String> cbAlbum = new JComboBox<>();
+        JComboBox<String> cbGenre = new JComboBox<>();
+        JComboBox<String> cbMedia = new JComboBox<>();
+        JTextField txtComposer = new JTextField();
+        JTextField txtMs = new JTextField("300000");
+        JTextField txtPrice = new JTextField("0.99");
+
+        // Populate dropdowns
+        populateCombo(cbAlbum, "SELECT Title FROM Album ORDER BY Title", "Title");
+        populateCombo(cbGenre, "SELECT Name FROM Genre ORDER BY Name", "Name");
+        populateCombo(cbMedia, "SELECT Name FROM MediaType ORDER BY Name", "Name");
+
+        dialog.add(new JLabel("Track Name:")); dialog.add(txtName);
+        dialog.add(new JLabel("Album:"));      dialog.add(cbAlbum);
+        dialog.add(new JLabel("Genre:"));      dialog.add(cbGenre);
+        dialog.add(new JLabel("Media Type:")); dialog.add(cbMedia);
+        dialog.add(new JLabel("Composer:"));   dialog.add(txtComposer);
+        dialog.add(new JLabel("Milliseconds:")); dialog.add(txtMs);
+        dialog.add(new JLabel("Unit Price:")); dialog.add(txtPrice);
+
+        JButton btnSave = new JButton("Save Track");
+        dialog.add(btnSave);
+
+        btnSave.addActionListener(e -> {
+            try (Connection conn = getConnection()) {
+                String sql = "INSERT INTO Track (Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, UnitPrice) " +
+                             "VALUES (?, (SELECT AlbumId FROM Album WHERE Title=? LIMIT 1), " +
+                             "(SELECT MediaTypeId FROM MediaType WHERE Name=? LIMIT 1), " +
+                             "(SELECT GenreId FROM Genre WHERE Name=? LIMIT 1), ?, ?, ?)";
+
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ps.setString(1, txtName.getText());
+                ps.setString(2, (String) cbAlbum.getSelectedItem());
+                ps.setString(3, (String) cbMedia.getSelectedItem());
+                ps.setString(4, (String) cbGenre.getSelectedItem());
+                ps.setString(5, txtComposer.getText());
+                ps.setInt(6, Integer.parseInt(txtMs.getText()));
+                ps.setDouble(7, Double.parseDouble(txtPrice.getText()));
+
+                ps.executeUpdate();
+                JOptionPane.showMessageDialog(dialog, "Track added successfully!");
+                dialog.dispose();
+                loadTracks(model);   // refresh table
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Error: " + ex.getMessage());
+            }
+        });
+
+        dialog.setVisible(true);
+    }
+    
     private void initComponents() {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
