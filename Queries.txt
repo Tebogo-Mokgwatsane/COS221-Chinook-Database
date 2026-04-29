@@ -1,4 +1,14 @@
 -- 4.1 & 4.2
 SELECT e1.FirstName, e1.LastName, e1.Title, e1.City, e1.Country, e1.Phone, CONCAT(e2.FirstName, ' ', e2.LastName) AS Supervisor
-FROM Employee e1 LEFT JOIN Employee e2 ON e1.ReportsTo = e2.EmployeeId
+FROM Employee e1 
+LEFT JOIN Employee e2 ON e1.ReportsTo = e2.EmployeeId
 WHERE CONCAT(e1.FirstName, ' ', e1.LastName, e1.City) LIKE ?
+
+-- 4.3 
+SELECT t.TrackId, t.Name, a.Title AS Album, g.Name AS Genre, m.Name AS MediaType, t.Composer, t.UnitPrice
+FROM Track t
+LEFT JOIN Album a ON t.AlbumId = a.AlbumId
+LEFT JOIN Genre g ON t.GenreId = g.GenreId
+LEFT JOIN MediaType m ON t.MediaTypeId = m.MediaTypeId
+LIMIT 200
+            

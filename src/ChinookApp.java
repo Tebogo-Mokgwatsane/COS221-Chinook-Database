@@ -53,6 +53,7 @@ public class ChinookApp extends JFrame {
 
         // Create all tabs/tables
         createEmployeesTab();
+        createTracksTab();
 
 
         setVisible(true);
@@ -122,6 +123,52 @@ public class ChinookApp extends JFrame {
             }
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Error loading employees: " + ex.getMessage());
+        }
+    }
+    // ====================== 4.3 TRACKS TAB ======================
+    private void createTracksTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JButton btnAdd = new JButton("Add New Track");
+        String[] cols = {"TrackId", "Name", "Album", "Genre", "MediaType", "Composer", "Price"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+
+        panel.add(btnAdd, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        loadTracks(model);
+
+        tabbedPane.addTab("Tracks", panel);
+    }
+
+    private void loadTracks(DefaultTableModel model) {
+        model.setRowCount(0);
+        String sql = """
+            SELECT t.TrackId, t.Name, a.Title AS Album, g.Name AS Genre,
+                   m.Name AS MediaType, t.Composer, t.UnitPrice
+            FROM Track t
+            LEFT JOIN Album a ON t.AlbumId = a.AlbumId
+            LEFT JOIN Genre g ON t.GenreId = g.GenreId
+            LEFT JOIN MediaType m ON t.MediaTypeId = m.MediaTypeId
+            LIMIT 200
+            """;
+
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                Vector<Object> row = new Vector<>();
+                row.add(rs.getInt("TrackId"));
+                row.add(rs.getString("Name"));
+                row.add(rs.getString("Album"));
+                row.add(rs.getString("Genre"));
+                row.add(rs.getString("MediaType"));
+                row.add(rs.getString("Composer"));
+                row.add(rs.getDouble("UnitPrice"));
+                model.addRow(row);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
