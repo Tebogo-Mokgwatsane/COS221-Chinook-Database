@@ -421,6 +421,128 @@ public class ChinookApp extends JFrame {
 
         return p;
     }
+    
+    // ====================== 4.7 CUSTOMER RECOMMENDATIONS TAB ======================
+    private void createRecommendationsTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        JPanel top = new JPanel();
+        top.add(new JLabel("Select Customer:"));
+        JComboBox<String> cbCustomer = new JComboBox<>();
+        top.add(cbCustomer);
+
+        panel.add(top, BorderLayout.NORTH);
+
+        JTextArea summaryArea = new JTextArea(6, 50);
+        summaryArea.setEditable(false);
+        panel.add(new JScrollPane(summaryArea), BorderLayout.CENTER);
+
+        String[] recCols = {"Track Name", "Album", "Genre", "UnitPrice"};
+        DefaultTableModel recModel = new DefaultTableModel(recCols, 0);
+        JTable recTable = new JTable(recModel);
+        panel.add(new JScrollPane(recTable), BorderLayout.SOUTH);
+
+        // Populate customer dropdown
+        populateCustomerCombo(cbCustomer);
+
+        cbCustomer.addItemListener(e -> {
+            if (e.getStateChange() == ItemEvent.SELECTED) {
+                String selected = (String) cbCustomer.getSelectedItem();
+                if (selected != null) {
+                    int custId = Integer.parseInt(selected.split(" - ")[0]);
+                    updateCustomerInsights(custId, summaryArea, recModel);
+                }
+            }
+        });
+
+        tabbedPane.addTab("Customer Recommendations", panel);
+    }
+
+    private void populateCustomerCombo(JComboBox<String> cb) {
+        cb.removeAllItems();
+        String sql = "SELECT CustomerId, FirstName, LastName FROM Customer ORDER BY LastName";
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                cb.addItem(rs.getInt("CustomerId") + " - " + rs.getString("FirstName") + " " + rs.getString("LastName"));
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void updateCustomerInsights(int customerId, JTextArea summary, DefaultTableModel recModel) {
+        summary.setText("");
+
+        try (Connection conn = getConnection()) {
+            // Spending Summary
+            String sumSql = """
+                SELECT ROUND(SUM(Total),2) AS TotalSpent, COUNT(*) AS Purchases, MAX(InvoiceDate) AS LastPurchase
+                FROM Invoice WHERE CustomerId = ?
+                """;
+            PreparedStatement ps = conn.prepareStatement(sumSql);
+            ps.setInt(1, customerId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                summary.append("Total Spent: $" + rs.getDouble("TotalSpent") + "\n");
+                summary.append("Purchases: " + rs.getInt("Purchases") + "\n");
+                summary.append("Last Purchase: " + rs.getDate("LastPurchase") + "\n\n");
+            }
+
+            // Favourite Genre
+            String favSql = """
+                SELECT g.Name, COUNT(*) AS cnt
+                FROM Invoice i
+                JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+                JOIN Track t ON il.TrackId = t.TrackId
+                JOIN Genre g ON t.GenreId = g.GenreId
+                WHERE i.CustomerId = ?
+                GROUP BY g.GenreId, g.Name
+                ORDER BY cnt DESC LIMIT 1
+                """;
+            ps = conn.prepareStatement(favSql);
+            ps.setInt(1, customerId);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                summary.append("Favourite Genre: " + rs.getString("Name") + "\n\n");
+            }
+
+            // Tracks favourite genre not yet purchased by customer
+            String recSql = """
+                SELECT t.Name, a.Title AS Album, g.Name AS Genre, t.UnitPrice
+                FROM Track t
+                JOIN Album a ON t.AlbumId = a.AlbumId
+                JOIN Genre g ON t.GenreId = g.GenreId
+                WHERE g.GenreId = (SELECT GenreId FROM (
+                    SELECT t2.GenreId, COUNT(*) cnt FROM InvoiceLine il2
+                    JOIN Track t2 ON il2.TrackId = t2.TrackId
+                    WHERE il2.InvoiceId IN (SELECT InvoiceId FROM Invoice WHERE CustomerId=?)
+                    GROUP BY t2.GenreId ORDER BY cnt DESC LIMIT 1
+                ) fav)
+                AND t.TrackId NOT IN (
+                    SELECT il3.TrackId FROM InvoiceLine il3
+                    JOIN Invoice i3 ON il3.InvoiceId = i3.InvoiceId
+                    WHERE i3.CustomerId = ?
+                )
+                LIMIT 20
+                """;
+
+            ps = conn.prepareStatement(recSql);
+            ps.setInt(1, customerId);
+            ps.setInt(2, customerId);
+            rs = ps.executeQuery();
+
+            recModel.setRowCount(0);
+            while (rs.next()) {
+                recModel.addRow(new Object[]{
+                    rs.getString("Name"),
+                    rs.getString("Album"),
+                    rs.getString("Genre"),
+                    rs.getDouble("UnitPrice")
+                });
+            }
+
+        } catch (Exception ex) {
+            summary.setText("Error: " + ex.getMessage());
+        }
+    }
 
     private void initComponents() {
 

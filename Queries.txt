@@ -32,9 +32,41 @@ DELETE FROM Customer WHERE CustomerId=?
 
 SELECT CustomerId, FirstName, LastName, Email, Phone, Country FROM Customer
 
---4.6
+-- 4.6
 SELECT c.CustomerId, c.FirstName, c.LastName, c.Email, MAX(i.InvoiceDate) AS LastInvoice
 FROM Customer c
 LEFT JOIN Invoice i ON c.CustomerId = i.CustomerId
 GROUP BY c.CustomerId, c.FirstName, c.LastName, c.Email
 HAVING MAX(i.InvoiceDate) IS NULL OR MAX(i.InvoiceDate) < DATE_SUB(CURDATE(), INTERVAL 2 YEAR)
+
+-- 4.7
+--Spending Summary
+SELECT ROUND(SUM(Total),2) AS TotalSpent, COUNT(*) AS Purchases, MAX(InvoiceDate) AS LastPurchase
+FROM Invoice WHERE CustomerId = ?
+--Favourite Genre
+                SELECT g.Name, COUNT(*) AS cnt
+                FROM Invoice i
+                JOIN InvoiceLine il ON i.InvoiceId = il.InvoiceId
+                JOIN Track t ON il.TrackId = t.TrackId
+                JOIN Genre g ON t.GenreId = g.GenreId
+                WHERE i.CustomerId = ?
+                GROUP BY g.GenreId, g.Name
+                ORDER BY cnt DESC LIMIT 1
+--Tracks favourite genre
+                SELECT t.Name, a.Title AS Album, g.Name AS Genre, t.UnitPrice
+                FROM Track t
+                JOIN Album a ON t.AlbumId = a.AlbumId
+                JOIN Genre g ON t.GenreId = g.GenreId
+                WHERE g.GenreId = (SELECT GenreId FROM (
+                    SELECT t2.GenreId, COUNT(*) cnt FROM InvoiceLine il2
+                    JOIN Track t2 ON il2.TrackId = t2.TrackId
+                    WHERE il2.InvoiceId IN (SELECT InvoiceId FROM Invoice WHERE CustomerId=?)
+                    GROUP BY t2.GenreId ORDER BY cnt DESC LIMIT 1
+                ) fav)
+                AND t.TrackId NOT IN (
+                    SELECT il3.TrackId FROM InvoiceLine il3
+                    JOIN Invoice i3 ON il3.InvoiceId = i3.InvoiceId
+                    WHERE i3.CustomerId = ?
+                )
+                LIMIT 20
+
