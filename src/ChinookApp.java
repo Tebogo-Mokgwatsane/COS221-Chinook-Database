@@ -206,10 +206,12 @@ public class ChinookApp extends JFrame {
 
         btnSave.addActionListener(e -> {
             try (Connection conn = getConnection()) {
-                String sql = "INSERT INTO Track (Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, UnitPrice) " +
-                             "VALUES (?, (SELECT AlbumId FROM Album WHERE Title=? LIMIT 1), " +
-                             "(SELECT MediaTypeId FROM MediaType WHERE Name=? LIMIT 1), " +
-                             "(SELECT GenreId FROM Genre WHERE Name=? LIMIT 1), ?, ?, ?)";
+                String sql ="""
+                            INSERT INTO Track (Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, UnitPrice) 
+                            VALUES (?, (SELECT AlbumId FROM Album WHERE Title=? LIMIT 1), 
+                            (SELECT MediaTypeId FROM MediaType WHERE Name=? LIMIT 1),
+                            (SELECT GenreId FROM Genre WHERE Name=? LIMIT 1), ?, ?, ?)
+                            """;
 
                 PreparedStatement ps = conn.prepareStatement(sql);
                 ps.setString(1, txtName.getText());
