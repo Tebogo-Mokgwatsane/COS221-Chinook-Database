@@ -17,5 +17,10 @@ VALUES (?, (SELECT AlbumId FROM Album WHERE Title=? LIMIT 1),
 (SELECT MediaTypeId FROM MediaType WHERE Name=? LIMIT 1),
 (SELECT GenreId FROM Genre WHERE Name=? LIMIT 1), ?, ?, ?)
 
-
-            
+-- 4.4
+SELECT g.Name AS Genre, ROUND(SUM(il.Quantity * il.UnitPrice), 2) AS TotalRevenue
+FROM Genre g
+JOIN Track t ON g.GenreId = t.GenreId
+JOIN InvoiceLine il ON t.TrackId = il.TrackId
+GROUP BY g.GenreId, g.Name
+ORDER BY TotalRevenue DESC

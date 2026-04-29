@@ -54,7 +54,7 @@ public class ChinookApp extends JFrame {
         // Create all tabs/tables
         createEmployeesTab();
         createTracksTab();
-
+        createReportTab();
 
         setVisible(true);
     }
@@ -239,6 +239,48 @@ public class ChinookApp extends JFrame {
                 cb.addItem(rs.getString(column));
             }
         } catch (Exception ignored) {}
+    }
+    
+    // ====================== 4.4 REPORT TAB - GENRE REVENUE ======================
+    private void createReportTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JButton btnRefresh = new JButton("Refresh Revenue Report");
+        String[] cols = {"Genre", "Total Revenue"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+
+        panel.add(btnRefresh, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        btnRefresh.addActionListener(e -> loadGenreRevenue(model));
+
+        // Auto load when tab selected
+        tabbedPane.addChangeListener(e -> {
+            if (tabbedPane.getSelectedComponent() == panel) loadGenreRevenue(model);
+        });
+
+        tabbedPane.addTab("Genre Revenue Report", panel);
+    }
+
+    private void loadGenreRevenue(DefaultTableModel model) {
+        model.setRowCount(0);
+        String sql = """
+            SELECT g.Name AS Genre, ROUND(SUM(il.Quantity * il.UnitPrice), 2) AS TotalRevenue
+            FROM Genre g
+            JOIN Track t ON g.GenreId = t.GenreId
+            JOIN InvoiceLine il ON t.TrackId = il.TrackId
+            GROUP BY g.GenreId, g.Name
+            ORDER BY TotalRevenue DESC
+            """;
+
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                model.addRow(new Object[]{rs.getString("Genre"), rs.getDouble("TotalRevenue")});
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void initComponents() {
