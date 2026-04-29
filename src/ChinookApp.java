@@ -42,21 +42,36 @@ public class ChinookApp extends JFrame {
     private JTabbedPane tabbedPane;
 
     public ChinookApp() {
+
         setTitle("Chinook Music Store - COS 221 Practical 4");
+
+        // ====================== COLOR/STYKE THEME ======================
+        getContentPane().setBackground(new Color(245, 245, 245)); // light gray background
+    
+        Color primaryBlue = new Color(0, 123, 255);      // MySQL like blue
+        Color accentOrange = new Color(255, 140, 0);     // MariaDB like orange
+
+        tabbedPane.setBackground(new Color(240, 240, 240));
+        tabbedPane.setForeground(Color.BLACK);
+    
+        //Making active tabs more visible
+        UIManager.put("TabbedPane.selectedForeground", Color.WHITE);
+        UIManager.put("TabbedPane.selectedBackground", primaryBlue);
+        // ====================== COLOR/STYLE THEME ======================
+        
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1200, 800);
+        setSize(1200, 800); //setSize(1250, 820);
         setLocationRelativeTo(null);
 
         tabbedPane = new JTabbedPane();
         add(tabbedPane);
-
 
         // Create all tabs/tables
         createEmployeesTab();
         createTracksTab();
         createReportTab();
         createNotificationsTab();
-        //createRecommendationsTab();
+        createRecommendationsTab();
 
         setVisible(true);
     }
@@ -421,7 +436,7 @@ public class ChinookApp extends JFrame {
 
         return p;
     }
-    
+
     // ====================== 4.7 CUSTOMER RECOMMENDATIONS TAB ======================
     private void createRecommendationsTab() {
         JPanel panel = new JPanel(new BorderLayout());
