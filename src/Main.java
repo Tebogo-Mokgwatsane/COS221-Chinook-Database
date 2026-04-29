@@ -10,9 +10,18 @@ public class Main{
         System.setProperty("CHINOOK_DB_USERNAME", "chinook_user");
         System.setProperty("CHINOOK_DB_PASSWORD", "ChinookPass2026");
     
-        try {
+        /*try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {}*/
+
+        try {
+            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                UIManager.setLookAndFeel(info.getClassName());
+                break;
+                }
+            }
+        } catch (Exception e) {}
 
         SwingUtilities.invokeLater(ChinookApp::new);
     }

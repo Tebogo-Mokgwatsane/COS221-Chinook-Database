@@ -1,6 +1,7 @@
 /** @author Tebogo Mokgwatsane */
 
 import javax.swing.*;
+import javax.swing.border.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
@@ -41,29 +42,38 @@ public class ChinookApp extends JFrame {
 
     private JTabbedPane tabbedPane;
 
+    public Color primaryBlue = new Color(8, 101, 141);      // MySQL like blue
+    public Color accentOrange = new Color(255, 140, 0);     // MySQL like orange
+    public Color lightBg = new Color(245, 245, 245);    // Light grey background
+    public Color white = Color.WHITE;
+
     public ChinookApp() {
 
         setTitle("Chinook Music Store - COS 221 Practical 4");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1250, 820);
+        setSize(1280, 800);
         setLocationRelativeTo(null);
 
-        tabbedPane = new JTabbedPane();
+        // ====================== COLOR/STYLE THEME ======================
 
-        // ====================== COLOR/STYKE THEME ======================
-        Color primaryBlue = new Color(0, 123, 255);      // MySQL like blue
-        Color accentOrange = new Color(255, 140, 0);     // MariaDB like orange
-
-        getContentPane().setBackground(new Color(245, 245, 245)); // light gray background
-
-        tabbedPane.setBackground(new Color(240, 240, 240));
-        tabbedPane.setForeground(Color.BLACK);
-    
         //Making active tabs more visible
         UIManager.put("TabbedPane.selectedForeground", Color.WHITE);        
         UIManager.put("TabbedPane.selectedBackground", primaryBlue);
         UIManager.put("Button.background", primaryBlue);
-        UIManager.put("Button.foreground", Color.WHITE);
+        UIManager.put("Button.foreground", Color.BLACK);
+        UIManager.put("Button.focusPainted", false);
+
+        // Selected tab is styled
+        UIManager.put("TabbedPane.selected", primaryBlue);
+        UIManager.put("TabbedPane.contentAreaColor", primaryBlue);
+
+        // Initialising tabbed pane
+        tabbedPane = new JTabbedPane();
+        tabbedPane.setOpaque(true);
+        tabbedPane.setBackground(accentOrange);
+        tabbedPane.setForeground(Color.BLACK);
+
+        getContentPane().setBackground(primaryBlue);
         // ====================== COLOR/STYLE THEME ======================
 
         add(tabbedPane);
@@ -81,12 +91,15 @@ public class ChinookApp extends JFrame {
     // ====================== 4.1 + 4.2 EMPLOYEES TAB ======================
     private void createEmployeesTab() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(accentOrange);
 
         JLabel lblFilter = new JLabel("Filter by Name or City:");
         JTextField txtFilter = new JTextField(20);
-        JButton btnFilter = new JButton("Apply Filter");
+        JButton btnFilter = new JButton("  Apply Filter  ");
+        btnFilter.setBorder(new LineBorder(accentOrange));
 
         JPanel top = new JPanel();
+        top.setBackground(primaryBlue);
         top.add(lblFilter);
         top.add(txtFilter);
         top.add(btnFilter);
@@ -147,6 +160,7 @@ public class ChinookApp extends JFrame {
     // ====================== 4.3 TRACKS TAB - ADD NEW TRACK ======================
     private void createTracksTab() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(accentOrange);
 
         JButton btnAdd = new JButton("Add New Track");
         String[] cols = {"TrackId", "Name", "Album", "Genre", "MediaType", "Composer", "Price"};
@@ -265,6 +279,8 @@ public class ChinookApp extends JFrame {
     // ====================== 4.4 REPORT TAB - GENRE REVENUE ======================
     private void createReportTab() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(accentOrange);
+
         JButton btnRefresh = new JButton("Refresh Revenue Report");
         String[] cols = {"Genre", "Total Revenue"};
         DefaultTableModel model = new DefaultTableModel(cols, 0);
@@ -397,6 +413,8 @@ public class ChinookApp extends JFrame {
     // ====================== 4.6 NOTIFICATIONS TAB (Inactive) ======================
     private JPanel createInactiveCustomersPanel() {
         JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(accentOrange);
+
         JTextField txtSearch = new JTextField(20);
         JButton btnSearch = new JButton("Search");
 
@@ -442,6 +460,7 @@ public class ChinookApp extends JFrame {
     // ====================== 4.7 CUSTOMER RECOMMENDATIONS TAB ======================
     private void createRecommendationsTab() {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(accentOrange);
 
         JPanel top = new JPanel();
         top.add(new JLabel("Select Customer:"));
