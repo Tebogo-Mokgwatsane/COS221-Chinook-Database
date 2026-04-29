@@ -24,3 +24,17 @@ JOIN Track t ON g.GenreId = t.GenreId
 JOIN InvoiceLine il ON t.TrackId = il.TrackId
 GROUP BY g.GenreId, g.Name
 ORDER BY TotalRevenue DESC
+
+-- 4.5
+INSERT INTO Customer (FirstName, LastName, Email, Phone, Country) VALUES (?,?,?,?,?)
+
+DELETE FROM Customer WHERE CustomerId=?
+
+SELECT CustomerId, FirstName, LastName, Email, Phone, Country FROM Customer
+
+--4.6
+SELECT c.CustomerId, c.FirstName, c.LastName, c.Email, MAX(i.InvoiceDate) AS LastInvoice
+FROM Customer c
+LEFT JOIN Invoice i ON c.CustomerId = i.CustomerId
+GROUP BY c.CustomerId, c.FirstName, c.LastName, c.Email
+HAVING MAX(i.InvoiceDate) IS NULL OR MAX(i.InvoiceDate) < DATE_SUB(CURDATE(), INTERVAL 2 YEAR)

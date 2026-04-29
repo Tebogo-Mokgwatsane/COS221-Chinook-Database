@@ -55,6 +55,8 @@ public class ChinookApp extends JFrame {
         createEmployeesTab();
         createTracksTab();
         createReportTab();
+        createNotificationsTab();
+        //createRecommendationsTab();
 
         setVisible(true);
     }
@@ -283,6 +285,141 @@ public class ChinookApp extends JFrame {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    // ====================== 4.5 (CRUD) ======================
+    private void createNotificationsTab() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JTabbedPane subTabs = new JTabbedPane();
+
+        // Sub-tab 1: Customer CRUD
+        JPanel crudPanel = createCustomerCRUDPanel();
+        // Sub-tab 2: Inactive Customers
+        JPanel inactivePanel = createInactiveCustomersPanel();
+
+        subTabs.addTab("Customer CRUD", crudPanel);
+        subTabs.addTab("Inactive Customers", inactivePanel);
+
+        panel.add(subTabs, BorderLayout.CENTER);
+        tabbedPane.addTab("Notifications", panel);
+    }
+
+    private JPanel createCustomerCRUDPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        String[] cols = {"CustomerId", "FirstName", "LastName", "Email", "Phone", "Country"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+
+        JPanel btnPanel = new JPanel();
+        JButton btnLoad = new JButton("Load Customers");
+        JButton btnAdd = new JButton("Add Customer");
+        JButton btnDelete = new JButton("Delete Selected");
+
+        btnPanel.add(btnLoad);
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
+
+        p.add(btnPanel, BorderLayout.NORTH);
+        p.add(scroll, BorderLayout.CENTER);
+
+        btnLoad.addActionListener(e -> loadCustomers(model));
+
+        btnAdd.addActionListener(e -> {
+            // Dialog for create
+            String fname = JOptionPane.showInputDialog("First Name:");
+            String lname = JOptionPane.showInputDialog("Last Name:");
+            String email = JOptionPane.showInputDialog("Email:");
+            String phone = JOptionPane.showInputDialog("Phone:");
+            String country = JOptionPane.showInputDialog("Country:");
+
+            if (fname != null && email != null) {
+                String sql = "INSERT INTO Customer (FirstName, LastName, Email, Phone, Country) VALUES (?,?,?,?,?)";
+                try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setString(1, fname);
+                    ps.setString(2, lname);
+                    ps.setString(3, email);
+                    ps.setString(4, phone);
+                    ps.setString(5, country);
+                    ps.executeUpdate();
+                    JOptionPane.showMessageDialog(this, "Customer added!");
+                    loadCustomers(model);
+                } catch (Exception ex) { JOptionPane.showMessageDialog(this, ex.getMessage()); }
+            }
+        });
+
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) return;
+            int id = (Integer) model.getValueAt(row, 0);
+            if (JOptionPane.showConfirmDialog(this, "Delete customer " + id + "?") == JOptionPane.YES_OPTION) {
+                try (Connection conn = getConnection(); PreparedStatement ps = conn.prepareStatement("DELETE FROM Customer WHERE CustomerId=?")) {
+                    ps.setInt(1, id);
+                    ps.executeUpdate();
+                    loadCustomers(model);
+                } catch (Exception ex) { JOptionPane.showMessageDialog(this, ex.getMessage()); }
+            }
+        });
+
+        return p;
+    }
+
+    private void loadCustomers(DefaultTableModel model) {
+        model.setRowCount(0);
+        String sql = "SELECT CustomerId, FirstName, LastName, Email, Phone, Country FROM Customer";
+        try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getInt("CustomerId"), rs.getString("FirstName"), rs.getString("LastName"),
+                    rs.getString("Email"), rs.getString("Phone"), rs.getString("Country")
+                });
+            }
+        } catch (Exception ignored) {}
+    }
+
+    // ====================== 4.6 NOTIFICATIONS TAB (Inactive) ======================
+    private JPanel createInactiveCustomersPanel() {
+        JPanel p = new JPanel(new BorderLayout());
+        JTextField txtSearch = new JTextField(20);
+        JButton btnSearch = new JButton("Search");
+
+        String[] cols = {"CustomerId", "FirstName", "LastName", "Email", "Last Invoice"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        JScrollPane scroll = new JScrollPane(table);
+
+        JPanel top = new JPanel();
+        top.add(new JLabel("Search:")); top.add(txtSearch); top.add(btnSearch);
+
+        p.add(top, BorderLayout.NORTH);
+        p.add(scroll, BorderLayout.CENTER);
+
+        Runnable loadInactive = () -> {
+            model.setRowCount(0);
+            String sql = """
+                SELECT c.CustomerId, c.FirstName, c.LastName, c.Email,
+                       MAX(i.InvoiceDate) AS LastInvoice
+                FROM Customer c
+                LEFT JOIN Invoice i ON c.CustomerId = i.CustomerId
+                GROUP BY c.CustomerId, c.FirstName, c.LastName, c.Email
+                HAVING MAX(i.InvoiceDate) IS NULL 
+                    OR MAX(i.InvoiceDate) < DATE_SUB(CURDATE(), INTERVAL 2 YEAR)
+                """;
+
+            try (Connection conn = getConnection(); Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sql)) {
+                while (rs.next()) {
+                    model.addRow(new Object[]{
+                        rs.getInt("CustomerId"), rs.getString("FirstName"), rs.getString("LastName"),
+                        rs.getString("Email"), rs.getString("LastInvoice")
+                    });
+                }
+            } catch (Exception ex) { ex.printStackTrace(); }
+        };
+
+        loadInactive.run();
+        btnSearch.addActionListener(e -> loadInactive.run());
+
+        return p;
     }
 
     private void initComponents() {
